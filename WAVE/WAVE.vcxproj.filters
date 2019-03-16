@@ -27,7 +27,7 @@
     <ClInclude Include="WaveClass.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="WAVEOperater.h">
+    <ClInclude Include="WaveOperater.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
