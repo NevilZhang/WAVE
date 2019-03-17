@@ -144,7 +144,7 @@ void WaveHeaderClass::ShowInfo() {
 
 //文件操作函数
 bool WaveClass::ReadFile(char *wavePath) {
-	//cout << wavePath << endl;
+	
 	//clock_t startTime, endTime;
 	//startTime = clock();//计时开始
 
@@ -157,40 +157,33 @@ bool WaveClass::ReadFile(char *wavePath) {
 	fread(&wHC, sizeof(wHC), 1, pf);					//读取头文件数据
 	wHC.ShowInfo();
 
-	//short *tmpData = new short [wHC.dataInfoChunk.subChunk2Size / 2];//新建short类型临时数组，用于接收文件数据
-	wDC.dataChunk = new int[wHC.dataInfoChunk.subChunk2Size / 4];	//数据类对象分配内存空间
-	short tmpData;
+	short *tmpData = new short [wHC.dataInfoChunk.subChunk2Size / 2];//新建short类型临时数组，用于接收文件数据
+	wDC.dataChunk = new int[wHC.dataInfoChunk.subChunk2Size / 2];	//数据类对象分配内存空间
+	//short tmpData;
 
-	//cout << wHC.dataInfoChunk.subChunk2Size << endl;
-	//fread(tmpData, wHC.dataInfoChunk.subChunk2Size, 1, pf);	//读取数据文件
+	
+	fread(tmpData, wHC.dataInfoChunk.subChunk2Size, 1, pf);	//读取数据文件
 
 	//文件数据存储至WaveClass中
 	for (int i = 0; i < wHC.dataInfoChunk.subChunk2Size / 2; i++) {
-		//wDC.dataChunk[i] = (int)tmpData[i];
-		int re = fread(&tmpData, 2, 1, pf);
-		cout <<i<<"	:"<< tmpData << "	:"<<re<<endl;
 		
+		//fread(&tmpData, 2, 1, pf);
+		wDC.dataChunk[i] = tmpData[i];
+		/*
+		cout <<i<<"	:"<< tmpData[i] << "	:"<< wDC.dataChunk[i] <<endl;
 		if (i == 1160) {
 
 			//cout << i << endl;
 			break;
 		}
+		*/
 		
 	}
-	/*
-	for (int i = 0; i < wHC.dataInfoChunk.subChunk2Size / 2; i++) {
-		cout << tmpData[i] << "		"<<wDC.dataChunk[i] << endl;
-		if (wDC.dataChunk[i] == -12851) {
-			cout << i << endl;
-			break;
-		}
-	}
-	*/
 	//endTime = clock();//计时结束
 	//cout << wDC.dataChunk[wHC.dataInfoChunk.subChunk2Size-1] << "	" << tmpData[wHC.dataInfoChunk.subChunk2Size-1] << endl;
 	//cout << "The run time is: " << (double)(endTime - startTime) / CLOCKS_PER_SEC << "s" << endl;
 	fclose(pf);										//关闭文件
-	//delete tmpData;									//释放内存
+	//delete tmpData;								//释放内存
 	return true;									//ReadFile结束
 }
 
