@@ -155,7 +155,7 @@ bool WaveClass::ReadFile(char *wavePath) {
 	}
 
 	fread(&wHC, sizeof(wHC), 1, pf);					//读取头文件数据
-	wHC.ShowInfo();
+	//wHC.ShowInfo();
 
 	short *tmpData = new short [wHC.dataInfoChunk.subChunk2Size / 2];//新建short类型临时数组，用于接收文件数据
 	wDC.dataChunk = new int[wHC.dataInfoChunk.subChunk2Size / 2];	//数据类对象分配内存空间
