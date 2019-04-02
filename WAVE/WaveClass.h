@@ -1,7 +1,12 @@
 #pragma once
 #include<iostream>
 #include<windows.h>
+#include<string>
 #include<ctime>
+#include <stdio.h>
+#include "math.h"
+#include"SpeechClass.h"
+#define M_PI 3.14159265358979323846
 using namespace std;
 
 //////////////////////////////////////————WAVE文件类和结构体————/////////////////////////////////////////////////
@@ -27,7 +32,7 @@ struct FmtChunk {
 //wave文件数据信息块的结构体
 struct DataInfoChunk {
 	char subChunkID[4];			//真正的声音数据块，本字段一般是"data"
-	unsigned long subChunk2Size;			//本数据块的大小，不包括ID和Size字段本身
+	unsigned long subChunk2Size;//本数据块的大小，不包括ID和Size字段本身
 	
 };
 
@@ -69,7 +74,7 @@ public:
 	WaveDataClass	wDC;
 public:
 	bool ReadFile(char *wavePath);
-	
+	SpeechClass EnFrame(int nw, int inc, string windows_function_name);
 };
 
 
@@ -135,9 +140,12 @@ void WaveHeaderClass::ShowInfo() {
 			<< dataInfoChunk.subChunkID[1]
 			<< dataInfoChunk.subChunkID[2]
 			<< dataInfoChunk.subChunkID[3] << endl;
-	cout	<< "采样数据 Data 大小：" 
+	cout << "采样数据 Data 大小："
 			<< dataInfoChunk.subChunk2Size
-			<<"字节"<< endl;
+			<< "个字节;"
+			<< dataInfoChunk.subChunk2Size/2
+			<< "个采样点"
+			<< endl;
 	
 
 }
@@ -155,8 +163,8 @@ bool WaveClass::ReadFile(char *wavePath) {
 	}
 
 	fread(&wHC, sizeof(wHC), 1, pf);					//读取头文件数据
-	//wHC.ShowInfo();
-
+	wHC.dataInfoChunk.subChunk2Size = wHC.riffChunk.chunkSize - 42;
+	wHC.ShowInfo();
 	short *tmpData = new short [wHC.dataInfoChunk.subChunk2Size / 2];//新建short类型临时数组，用于接收文件数据
 	wDC.dataChunk = new int[wHC.dataInfoChunk.subChunk2Size / 2];	//数据类对象分配内存空间
 	//short tmpData;
@@ -169,6 +177,7 @@ bool WaveClass::ReadFile(char *wavePath) {
 		
 		//fread(&tmpData, 2, 1, pf);
 		wDC.dataChunk[i] = tmpData[i];
+		//cout << wDC.dataChunk[i] << endl;
 		/*
 		cout <<i<<"	:"<< tmpData[i] << "	:"<< wDC.dataChunk[i] <<endl;
 		if (i == 1160) {
@@ -186,8 +195,64 @@ bool WaveClass::ReadFile(char *wavePath) {
 	//delete tmpData;								//释放内存
 	return true;									//ReadFile结束
 }
+SpeechClass hanning(SpeechClass speech_data, int nw, int nf) {
+	SpeechClass pre_hanning_data = SpeechClass(speech_data.frame_data);
+	long double* winfun = new long double[nw];
+	for (int i = 0; i < nw; i++) {
+		winfun[i] = 0.5 * (1.0 - cos(2.0 * M_PI *(i - 1) / nw));
+	}
+	for (int i = 0; i < nf; i++) {
+		for (int j = 0; j < nw; j++) {
+			pre_hanning_data.frame_data[i][j] *= winfun[j];
+		}
+	}
+	return pre_hanning_data;
+}
+SpeechClass WaveClass::EnFrame(int nw, int inc, string windows_function_name) {
+	/*
+		将音频信号转化为帧。
+        参数含义：
+        nw:每一帧的长度(这里指采样点的长度，即采样频率乘以时间间隔)
+        inc:相邻帧的间隔（同上定义）
+		windows_function_name:窗函数
+	*/
+	nw *= 16; inc *= 16;	//帧长和帧移从毫秒转移到采样点数量
+	SpeechClass speech_data;
+	int signal_length = wHC.dataInfoChunk.subChunk2Size/2;	//数据采样点总数
+	int nf = 0;	//帧数
+	
+	/*cout << "采样点数："<<signal_length <<endl;*/
 
-
+	if (signal_length <= nw) { // 若信号长度小于一个帧的长度，则帧数定义为1
+		nf = 1;
+	}
+	else {	//否则，计算帧的总数量
+		nf = int(ceil((1.0 * signal_length - nw + inc) / inc));
+	}
+	/*cout << "帧数："<<nf << endl;*/
+	int pad_length = int((nf - 1) * inc + nw);	//所有帧加起来总的铺平后的长度
+	int zero_length = pad_length - signal_length;	//不够的长度使用0填补，类似于FFT中的扩充数组操作
+	for (int i = 0; i < nf; i++) {				//分帧
+		vector<long double>tmpVector;
+		for (int k = 0; k < nw; k++) {			
+			//if (i == nf - 1 && zero_length != 0 && i*nw + k > signal_length) {
+			//	tmpVector.push_back(0.0);
+			//	//cout << tmpVector[k] << endl;
+			//}
+			//else {
+			//	tmpVector.push_back(long double(wDC.dataChunk[i*nw + k]));
+			//	//cout << tmpVector[k] << endl;
+			//}
+			tmpVector.push_back((i == nf - 1 && zero_length != 0 && i*nw + k > signal_length) ? 0.0 : long double(wDC.dataChunk[i*nw + k]));
+		}
+		speech_data.frame_data.push_back(tmpVector);
+	}
+	/*if (windows_function_name  == "hanning") {
+		return hanning(speech_data, nw, nf);
+	}
+	return speech_data;*/
+	return (windows_function_name == "hanning") ? hanning(speech_data, nw, nf) : speech_data;
+}
 
 
 
