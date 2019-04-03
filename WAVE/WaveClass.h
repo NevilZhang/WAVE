@@ -220,8 +220,6 @@ SpeechClass WaveClass::EnFrame(int nw, int inc, string windows_function_name) {
 	SpeechClass speech_data;
 	int signal_length = wHC.dataInfoChunk.subChunk2Size/2;	//数据采样点总数
 	int nf = 0;	//帧数
-	
-	/*cout << "采样点数："<<signal_length <<endl;*/
 
 	if (signal_length <= nw) { // 若信号长度小于一个帧的长度，则帧数定义为1
 		nf = 1;
@@ -229,30 +227,21 @@ SpeechClass WaveClass::EnFrame(int nw, int inc, string windows_function_name) {
 	else {	//否则，计算帧的总数量
 		nf = int(ceil((1.0 * signal_length - nw + inc) / inc));
 	}
-	/*cout << "帧数："<<nf << endl;*/
+
 	int pad_length = int((nf - 1) * inc + nw);	//所有帧加起来总的铺平后的长度
 	int zero_length = pad_length - signal_length;	//不够的长度使用0填补，类似于FFT中的扩充数组操作
 	for (int i = 0; i < nf; i++) {				//分帧
 		vector<long double>tmpVector;
-		for (int k = 0; k < nw; k++) {			
-			//if (i == nf - 1 && zero_length != 0 && i*nw + k > signal_length) {
-			//	tmpVector.push_back(0.0);
-			//	//cout << tmpVector[k] << endl;
-			//}
-			//else {
-			//	tmpVector.push_back(long double(wDC.dataChunk[i*nw + k]));
-			//	//cout << tmpVector[k] << endl;
-			//}
+		for (int k = 0; k < nw; k++) {			//尾部补零
 			tmpVector.push_back((i == nf - 1 && zero_length != 0 && i*nw + k > signal_length) ? 0.0 : long double(wDC.dataChunk[i*nw + k]));
 		}
 		speech_data.frame_data.push_back(tmpVector);
 	}
-	/*if (windows_function_name  == "hanning") {
-		return hanning(speech_data, nw, nf);
-	}
-	return speech_data;*/
 	return (windows_function_name == "hanning") ? hanning(speech_data, nw, nf) : speech_data;
 }
+
+
+
 
 
 

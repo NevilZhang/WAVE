@@ -8,11 +8,12 @@
 int main()
 {
 	WaveClass wC;
-	wC.ReadFile("G:\\Resource\\wav\\D1048\\ID1048W0001.wav");
+	/*wC.ReadFile("G:\\Resource\\wav\\D1048\\ID1048W0001.wav");*/
+	wC.ReadFile("G:\\Resource\\ID1048W0001.wav");
 	//wC.ReadFile("G:\\Resource\\F001_T4_M.wav");
 	cout << "Read Success" << endl;
+
 	SpeechClass speech;
-	
 	/*
 		frameWidth:Ö¡³¤£¬ms
 		frameStep:Ö¡ÒÆ,ms
@@ -20,7 +21,13 @@ int main()
 	int frameWidth = 25;
 	int frameStep = 10;
 	speech = wC.EnFrame(frameWidth,frameStep,"hanning");
-	
+	cout << "enframe success" << endl;
+	/*vector<long double> En = speech.shortEnergy();
+	vector<int>	Zn = speech.shortCrossZero();*/
+	/*cout << En[0] << endl;
+	cout << Zn[0] << endl;*/
+	vector<vector<long double>> pRealOut, pImageOut;
+	speech.ConvertToFFT(pRealOut,pImageOut);
 	system("pause");
     return 0;
 }
